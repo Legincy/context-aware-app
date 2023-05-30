@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 
 export interface IDropDownItem {
@@ -22,15 +23,23 @@ const DropDown = ({ items, setValue }: IDropDown) => {
     }, [value]);
 
     return (
-        <DropDownPicker
-            open={open}
-            value={value}
-            items={childItems}
-            setOpen={setOpen}
-            setValue={setValueInternal}
-            setItems={setChildItems}
-        />
+        <View style={styles.dropDownWrapper}>
+            <DropDownPicker
+                open={open}
+                value={value}
+                items={childItems}
+                setOpen={setOpen}
+                setValue={setValueInternal}
+                setItems={setChildItems}
+            />
+        </View>
     );
 };
+
+const styles = StyleSheet.create({
+    dropDownWrapper: {
+        zIndex: 2000,
+    },
+});
 
 export default DropDown;

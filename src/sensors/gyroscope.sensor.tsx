@@ -1,39 +1,57 @@
-import Gyroscope from 'expo-sensors/build/Gyroscope';
+import { Gyroscope } from 'expo-sensors';
 import { Subscription } from 'expo-sensors/build/Pedometer';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import ColoredDataBox from '../features/sensor/components/colored-data-box/colored-data-box.component';
+import { ISensorConfig } from '../interfaces/sensor-config.interface';
 
 type Props = {
-    updateInterval: number;
+    config: ISensorConfig;
+    onSensorEvent?: (data: any) => void;
+    onTaskUpdate?: (Subscription: Subscription | null) => void;
 };
 
-export const GyroscopeSensor = ({ updateInterval }: Props) => {
+type GyroscopeData = {
+    x: number | null;
+    y: number | null;
+    z: number | null;
+};
+
+export const GyroscopeSensor = (props: Props) => {
     const [subscription, setSubscription] = useState<Subscription | null>(null);
-    const [gyroscopeData, setGyroscopeData] = useState({
-        x: 0,
-        y: 0,
-        z: 0,
+    const [gyroscopeData, setGyroscopeData] = useState<GyroscopeData>({
+        x: null,
+        y: null,
+        z: null,
     });
 
-    const _subscribe = useCallback(() => {
-        setSubscription(Gyroscope.addListener(setGyroscopeData));
-    }, []);
+    useEffect(() => {
+        const newSubscription = props.config.isActive
+            ? Gyroscope.addListener?.(setGyroscopeData)
+            : null;
+        setSubscription(newSubscription);
 
-    const _unsubscribe = useCallback(() => {
-        subscription?.remove();
-        setSubscription(null);
-    }, [subscription]);
+        return () => {
+            newSubscription?.remove?.();
+        };
+    }, [props.config.isActive]);
 
     useEffect(() => {
-        Gyroscope.setUpdateInterval(updateInterval);
-    }, [updateInterval]);
+        Gyroscope.setUpdateInterval(props.config.updateInterval);
+    }, [props.config.updateInterval]);
 
     useEffect(() => {
-        _subscribe();
-        Gyroscope.setUpdateInterval(updateInterval);
-        return () => _unsubscribe();
-    }, []);
+        if (props.onTaskUpdate === undefined) return;
+        if (props.config.isActiveInBackground) {
+            if (props.config.subscription === null && props.onSensorEvent) {
+                const sensorTask = Gyroscope.addListener(props.onSensorEvent);
+                props.onTaskUpdate(sensorTask);
+            }
+        } else {
+            props.config.subscription?.remove();
+            props.onTaskUpdate(null);
+        }
+    }, [props.config.isActiveInBackground]);
 
     return (
         <View>

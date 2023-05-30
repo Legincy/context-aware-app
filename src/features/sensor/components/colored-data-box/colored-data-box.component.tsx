@@ -3,7 +3,7 @@ import colorMapConfig from './config/color-map.config';
 
 export interface ColoredBoxData {
     label: string;
-    value: string | number;
+    value: string | number | null;
 }
 
 type Props = {
@@ -26,7 +26,9 @@ export const ColoredDataBox = ({ data }: Props) => {
                 key={index}
             >
                 <Text style={styles.boxTitleText}>{boxData.label}</Text>
-                <Text style={styles.boxValueText}>{Number(boxData.value).toFixed(2)}</Text>
+                <Text style={styles.boxValueText}>
+                    {boxData.value ? Number(boxData.value).toFixed(2) : '---'}
+                </Text>
             </View>
         );
     });
@@ -39,7 +41,7 @@ const styles = StyleSheet.create({
         display: 'flex',
         flexDirection: 'row',
         width: '100%',
-        height: 96,
+        height: 80,
         gap: 8,
     },
     dataBox: {
@@ -52,8 +54,8 @@ const styles = StyleSheet.create({
         color: 'white',
         padding: 8,
     },
-    boxTitleText: { color: 'white', fontWeight: '500', fontSize: 18, opacity: 0.5 },
-    boxValueText: { color: 'white', fontWeight: '400', fontSize: 28, marginLeft: 'auto' },
+    boxTitleText: { color: 'white', fontWeight: '500', fontSize: 16, opacity: 0.5 },
+    boxValueText: { color: 'white', fontWeight: '200', fontSize: 28, marginLeft: 'auto' },
 });
 
 export default ColoredDataBox;

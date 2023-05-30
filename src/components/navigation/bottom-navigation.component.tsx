@@ -13,11 +13,12 @@ export const BottomNavigation = () => {
             ? {
                   tabPress: (e: any) => {
                       Toast.show('Tab currently not available', {
-                          opacity: 0.9,
+                          opacity: 0.5,
                           backgroundColor: AppConfig.APP_COLOR,
                           textColor: '#fff',
-                          position: -64,
+                          position: -32,
                           duration: Toast.durations.SHORT,
+                          shadow: false,
                       });
                       e.preventDefault();
                   },

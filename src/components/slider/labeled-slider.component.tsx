@@ -1,44 +1,37 @@
 import Slider from '@react-native-community/slider';
-import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { AppConfig } from '../../config/app.config';
 
-export interface ILabeledSlider {
+type Props = {
     label: string;
     minimumValue: number;
     maximumValue: number;
+    value?: number;
+    isDisabled?: boolean;
     step: number;
-    onValueChange?: (v: number) => void;
-}
+    onValueChange: (v: number) => void;
+    dotSize?: number; // New prop for dot size
+};
 
-export const LabeledSlider = ({
-    label,
-    minimumValue,
-    maximumValue,
-    step,
-    onValueChange,
-}: ILabeledSlider) => {
-    const [value, setValue] = useState<number>(minimumValue);
-
-    useEffect(() => {
-        onValueChange && onValueChange(value);
-    }, [value]);
+export const LabeledSlider = (props: Props) => {
+    const dotSize = props.dotSize || 20; // Default dot size if not provided
 
     return (
         <View style={styles.componentContainer}>
             <View style={styles.containerHeader}>
-                <Text style={styles.labelText}>{label}</Text>
-                <Text style={styles.sliderValueText}>{value ?? '---'}</Text>
+                <Text style={styles.labelText}>{props.label}</Text>
+                <Text style={styles.sliderValueText}>{props.value ?? '---'}</Text>
             </View>
             <Slider
+                disabled={props.isDisabled}
                 style={styles.slider}
-                minimumValue={minimumValue}
-                maximumValue={maximumValue}
-                step={step ? step : maximumValue / 10}
-                onValueChange={(value) => setValue(value)}
+                value={props.value}
+                minimumValue={props.minimumValue}
+                maximumValue={props.maximumValue}
+                step={props.step ?? props.maximumValue / 10}
+                onValueChange={(v) => props.onValueChange(v)}
                 minimumTrackTintColor='#BA68F9'
                 maximumTrackTintColor='#D1D1D1'
-                thumbTintColor={AppConfig.APP_COLOR}
+                thumbTintColor='#FFFFFF'
             />
         </View>
     );
@@ -66,7 +59,7 @@ const styles = StyleSheet.create({
     },
     slider: {
         width: '100%',
-        height: 50,
+        height: 40,
         paddingHorizontal: 8,
     },
 });

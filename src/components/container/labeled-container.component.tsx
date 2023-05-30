@@ -2,17 +2,22 @@ import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 
 type Props = {
     label: string;
-    children: JSX.Element | null;
+    children: React.ReactNode;
     style?: StyleProp<ViewStyle>;
 };
 
-export const LabeledContainer = ({ label, children, style }: Props) => {
+export const LabeledContainer = (props: Props) => {
     return (
-        <View style={[style && style, styles.componentContainer]}>
+        <View style={[styles.componentContainer]}>
             <View style={styles.containerHeader}>
-                <Text style={styles.labelText}>{label}</Text>
+                <Text style={styles.labelText}>{props.label}</Text>
+                <View style={styles.afterLabelText} />
             </View>
-            {children ?? null}
+            {props.children && (
+                <View style={[props.style && props.style, styles.childWrapper]}>
+                    {props.children}
+                </View>
+            )}
         </View>
     );
 };
@@ -26,8 +31,11 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     containerHeader: {
+        position: 'relative',
         display: 'flex',
         flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
     },
     labelText: {
         color: '#BEBEBE',
@@ -35,7 +43,16 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         zIndex: 200,
     },
-    sliderValueText: {},
+    afterLabelText: {
+        display: 'flex',
+        height: 1,
+        flex: 1,
+        backgroundColor: '#E2E2E2',
+    },
+    childWrapper: {
+        position: 'relative',
+        gap: 8,
+    },
 });
 
 export default LabeledContainer;
