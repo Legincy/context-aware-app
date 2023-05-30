@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     btnDisabled: {
         backgroundColor: '#E2E2E2',
         borderWidth: 1,
-        borderColor: '#BEBEBE',
+        borderColor: '#DEDEDE',
     },
 });
 

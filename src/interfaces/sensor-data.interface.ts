@@ -1,5 +1,5 @@
-export interface SensorData {
+export default interface ISensorData {
     sensor: string;
-    time: string;
+    timestamp: string;
     payload: any;
 }

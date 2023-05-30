@@ -1,10 +1,10 @@
 import { Accelerometer } from 'expo-sensors';
 import { Subscription } from 'expo-sensors/build/Pedometer';
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import ColoredDataBox from '../features/sensor/components/colored-data-box/colored-data-box.component';
-import { ISensorConfig } from '../interfaces/sensor-config.interface';
-import { SensorData } from '../interfaces/sensor-data.interface';
+import ISensorConfig from '../interfaces/sensor-config.interface';
+import SensorData from '../interfaces/sensor-data.interface';
 
 type Props = {
     config: ISensorConfig;
@@ -36,7 +36,7 @@ export const AccelerometerSensor = (props: Props) => {
                 [`${props.config.type}_z`]: rawData.z,
             },
             sensor: props.config.type,
-            time: new Date().toISOString(),
+            timestamp: new Date().toISOString(),
         };
 
         props.onSensorEvent(preparedData);
@@ -79,6 +79,7 @@ export const AccelerometerSensor = (props: Props) => {
                     { label: 'Z-Axis', value: accelerometerData?.z },
                 ]}
             />
+            <Text>Cache-Items: {props.config.cache.length}</Text>
         </View>
     );
 };

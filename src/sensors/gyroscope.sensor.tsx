@@ -3,7 +3,8 @@ import { Subscription } from 'expo-sensors/build/Pedometer';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import ColoredDataBox from '../features/sensor/components/colored-data-box/colored-data-box.component';
-import { ISensorConfig } from '../interfaces/sensor-config.interface';
+import ISensorConfig from '../interfaces/sensor-config.interface';
+import ISensorData from '../interfaces/sensor-data.interface';
 
 type Props = {
     config: ISensorConfig;
@@ -25,6 +26,21 @@ export const GyroscopeSensor = (props: Props) => {
         z: null,
     });
 
+    const onSensorUpdate = (rawData: GyroscopeData) => {
+        if (props.onSensorEvent === undefined) return;
+        const preparedData: ISensorData = {
+            payload: {
+                [`${props.config.type}_x`]: rawData.x,
+                [`${props.config.type}_y`]: rawData.y,
+                [`${props.config.type}_z`]: rawData.z,
+            },
+            sensor: props.config.type,
+            timestamp: new Date().toISOString(),
+        };
+
+        props.onSensorEvent(preparedData);
+    };
+
     useEffect(() => {
         const newSubscription = props.config.isActive
             ? Gyroscope.addListener?.(setGyroscopeData)
@@ -44,7 +60,7 @@ export const GyroscopeSensor = (props: Props) => {
         if (props.onTaskUpdate === undefined) return;
         if (props.config.isActiveInBackground) {
             if (props.config.subscription === null && props.onSensorEvent) {
-                const sensorTask = Gyroscope.addListener(props.onSensorEvent);
+                const sensorTask = Gyroscope.addListener(onSensorUpdate);
                 props.onTaskUpdate(sensorTask);
             }
         } else {

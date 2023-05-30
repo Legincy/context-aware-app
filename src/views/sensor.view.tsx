@@ -8,116 +8,157 @@ import DropDown from '../components/drop-down/drop-down.component';
 import CheckBox from '../components/form/checkbox.form';
 import { IconButton } from '../components/form/icon-button.form';
 import LabeledSlider from '../components/slider/labeled-slider.component';
+import { AppConfig } from '../config/app.config';
+import { defaultSensorConfig } from '../features/sensor/components/colored-data-box/config/default-sensor.config';
 import { Sensor } from '../features/sensor/sensor.config';
-import {
-    ISensorConfig,
-    IRegisteredSensor as ISensorRegister,
-} from '../interfaces/sensor-config.interface';
-import { SensorData } from '../interfaces/sensor-data.interface';
+import ICacheData from '../interfaces/cache-data.interface';
+import { IRegisteredSensor as ISensorRegister } from '../interfaces/sensor-config.interface';
+import ISensorData from '../interfaces/sensor-data.interface';
 import AccelerometerSensor from '../sensors/accelerometer.sensor';
-import { isEqual } from '../shared/utils/helper.utils';
+import GyroscopeSensor from '../sensors/gyroscope.sensor';
+import { postSensorData } from '../shared/api.shared';
 
 type Props = {};
 
 export const SensorView = (props: Props) => {
     const [sessionId, setSessionId] = useState<string | number[]>(uuid.v4);
     const [sensorRegister, setSensorRegister] = useState<ISensorRegister>({});
-    const [sensorConfig, setSensorConfig] = useState<ISensorConfig | null>(null);
     const [selectedSensor, setSelectedSensor] = useState<string | null>(null);
 
     const updateSensorTask = (subscription: Subscription | null) => {
-        if (sensorConfig === null) return;
-        setSensorConfig({ ...sensorConfig, subscription });
+        if (selectedSensor === null) return;
+        setSensorRegister({
+            ...sensorRegister,
+            [selectedSensor]: { ...sensorRegister[selectedSensor], subscription },
+        });
     };
 
-    const onSensorTaskEvent = (sensorData: SensorData) => {
-        console.log(sensorRegister, sensorData, sensorData === undefined);
-        /*setSensorRegister((prevState: ISensorRegister) => ({
+    const onSensorTaskEvent = (sensorData: ISensorData) => {
+        if (!sensorRegister.hasOwnProperty(sensorData.sensor)) return;
+        const extractedPayload = Object.keys(sensorData.payload).map((key: string): ICacheData => {
+            return {
+                measurementId: sessionId,
+                timestamp: sensorData.timestamp,
+                value: sensorData.payload[key],
+                sensor: key,
+            };
+        });
+
+        setSensorRegister((prevState) => ({
             ...prevState,
             [sensorData.sensor]: {
                 ...prevState[sensorData.sensor],
-                cache: [...prevState[sensorData.sensor]?.cache, ...sensorData.payload],
+                cache: [...prevState[sensorData.sensor].cache, ...extractedPayload],
             },
         }));
-        */
     };
 
-    const sensorComponents: {
-        [key in string]?: JSX.Element;
-    } = {
-        [Sensor.ACCELEROMETER]: (
-            <AccelerometerSensor
-                config={sensorConfig!}
-                onTaskUpdate={updateSensorTask}
-                onSensorEvent={onSensorTaskEvent}
-            />
-        ),
-        [Sensor.GYROSCOPE]: <AccelerometerSensor config={sensorConfig!} />,
-    };
-
-    const setUpdateInterval = (value: number) => {
-        if (sensorConfig === null) return;
-        setSensorConfig({ ...sensorConfig, updateInterval: value });
+    const setUpdateInterval = (updateInterval: number) => {
+        if (selectedSensor === null) return;
+        setSensorRegister({
+            ...sensorRegister,
+            [selectedSensor]: { ...sensorRegister[selectedSensor], updateInterval },
+        });
     };
 
     const toggleIsActive = () => {
-        if (sensorConfig === null) return;
-        setSensorConfig({
-            ...sensorConfig,
-            isActive: !sensorConfig.isActive,
+        if (selectedSensor === null) return;
+        setSensorRegister({
+            ...sensorRegister,
+            [selectedSensor]: {
+                ...sensorRegister[selectedSensor],
+                isActive: !sensorRegister[selectedSensor].isActive,
+            },
         });
     };
 
-    const setIsActiveInBackground = (status: boolean) => {
-        if (sensorConfig === null) return;
-        setSensorConfig({
-            ...sensorConfig,
-            isActiveInBackground: status,
+    const setIsActiveInBackground = (isActiveInBackground: boolean) => {
+        console.log('FUNCTION::setIsActiveInBackground::' + isActiveInBackground);
+        if (selectedSensor === null) return;
+        setSensorRegister({
+            ...sensorRegister,
+            [selectedSensor]: {
+                ...sensorRegister[selectedSensor],
+                isActiveInBackground: isActiveInBackground,
+            },
         });
+    };
+
+    const sensorComponents = () => {
+        if (selectedSensor === null || !sensorRegister.hasOwnProperty(selectedSensor)) return;
+
+        const componentMap: {
+            [key in string]?: JSX.Element;
+        } = {
+            [Sensor.ACCELEROMETER]: (
+                <AccelerometerSensor
+                    config={sensorRegister[selectedSensor]}
+                    onTaskUpdate={updateSensorTask}
+                    onSensorEvent={onSensorTaskEvent}
+                />
+            ),
+            [Sensor.GYROSCOPE]: (
+                <GyroscopeSensor
+                    config={sensorRegister[selectedSensor]}
+                    onTaskUpdate={updateSensorTask}
+                    onSensorEvent={onSensorTaskEvent}
+                />
+            ),
+        };
+
+        return componentMap[selectedSensor];
+    };
+
+    const handleDataSending = async (data: any[]) => {
+        try {
+            const response = await postSensorData(data);
+            console.log(`sent ${data.length} items`);
+            return true;
+        } catch (error) {
+            console.error(error);
+            return false;
+        }
     };
 
     useEffect(() => {
-        if (sensorConfig !== null && sensorConfig.type !== selectedSensor) {
-            const newConfig = { ...sensorRegister, [sensorConfig.type]: sensorConfig };
+        console.log('USE_EFFECT::selectedSensor');
+        if (selectedSensor === null || sensorRegister.hasOwnProperty(selectedSensor)) return;
 
-            if (!isEqual(newConfig, sensorRegister)) {
-                setSensorRegister(newConfig);
-            }
-        }
-
-        if (selectedSensor !== null) {
-            let activeSensorConfig: ISensorConfig = {
-                isActive: true,
-                isActiveInBackground: false,
-                updateInterval: 1000,
-                type: selectedSensor,
-                cache: [],
-            };
-
-            if (sensorRegister.hasOwnProperty(selectedSensor)) {
-                activeSensorConfig = sensorRegister[selectedSensor];
-            }
-
-            setSensorConfig(activeSensorConfig);
-        }
+        const newSensorConfig = { ...defaultSensorConfig, type: selectedSensor };
+        setSensorRegister((prevRegister) => ({
+            ...prevRegister,
+            [selectedSensor]: newSensorConfig,
+        }));
     }, [selectedSensor]);
 
     useEffect(() => {
-        Object.keys(sensorRegister).forEach((config) =>
-            console.log({
-                ...sensorRegister[config],
-                cache_size: len(sensorRegister[config].cache),
-            }),
-        );
+        if (Object.keys(sensorRegister).length === 0) return;
+        Object.keys(sensorRegister).forEach(async (sensor) => {
+            if (sensorRegister[sensor].cache.length >= AppConfig.CACHE_SIZE) {
+                if (await handleDataSending(sensorRegister[sensor].cache)) {
+                    setSensorRegister((prevState) => ({
+                        ...sensorRegister,
+                        [sensor]: { ...sensorRegister[sensor], cache: [] },
+                    }));
+                }
+            }
+        });
     }, [sensorRegister]);
+
+    useEffect(() => {
+        if (selectedSensor === null) return;
+        handleDataSending(sensorRegister[selectedSensor].cache);
+        setSensorRegister((prevState) => ({
+            ...prevState,
+            [selectedSensor]: { ...prevState[selectedSensor], cache: [] },
+        }));
+    }, [sessionId]);
 
     return (
         <View style={styles.componentContainer}>
-            {sensorConfig !== null && (
+            {selectedSensor !== null && (
                 <View style={styles.sensorViewWrapper}>
-                    <View style={styles.sensorContainer}>
-                        {sensorComponents[sensorConfig.type]}
-                    </View>
+                    <View style={styles.sensorContainer}>{sensorComponents()}</View>
                     <LabeledContainer label='Sensor Settings'>
                         <View>
                             <LabeledSlider
@@ -125,12 +166,11 @@ export const SensorView = (props: Props) => {
                                 minimumValue={200}
                                 maximumValue={10000}
                                 step={100}
-                                value={sensorConfig.updateInterval}
-                                isDisabled={!sensorConfig}
+                                value={sensorRegister[selectedSensor]?.updateInterval}
                                 onValueChange={setUpdateInterval}
                             />
                             <CheckBox
-                                value={sensorConfig.isActiveInBackground}
+                                value={sensorRegister[selectedSensor]?.isActiveInBackground}
                                 onChange={setIsActiveInBackground}
                                 label='Stay active in background'
                             />
@@ -145,10 +185,18 @@ export const SensorView = (props: Props) => {
                     setValue={(sensor: string) => setSelectedSensor(sensor)}
                 />
                 <IconButton
-                    label={sensorConfig?.isActive === true ? 'Deactivate' : 'Activate'}
+                    label={
+                        selectedSensor !== null && sensorRegister[selectedSensor]?.isActive === true
+                            ? 'Deactivate'
+                            : 'Activate'
+                    }
                     icon='power'
-                    isDisabled={sensorConfig === null}
-                    color={sensorConfig?.isActive ? '#DC3545' : '#3BA55C'}
+                    isDisabled={selectedSensor === null}
+                    color={
+                        selectedSensor !== null && sensorRegister[selectedSensor]?.isActive
+                            ? '#DC3545'
+                            : '#3BA55C'
+                    }
                     style={styles.sensorControlBtn}
                     onPress={toggleIsActive}
                 />
