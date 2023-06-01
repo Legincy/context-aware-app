@@ -16,8 +16,8 @@ export const App = () => {
 const styles = StyleSheet.create({
     appContainer: {
         display: 'flex',
-        height: '100vh',
-        width: '100vw',
+        height: '100%',
+        width: '100%',
     },
 });
 
