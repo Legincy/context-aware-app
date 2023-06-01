@@ -42,6 +42,7 @@ export const GyroscopeSensor = (props: Props) => {
     };
 
     useEffect(() => {
+        Gyroscope.setUpdateInterval(props.config.updateInterval);
         const newSubscription = props.config.isActive
             ? Gyroscope.addListener?.(setGyroscopeData)
             : null;

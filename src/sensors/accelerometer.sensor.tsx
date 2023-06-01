@@ -43,6 +43,7 @@ export const AccelerometerSensor = (props: Props) => {
     };
 
     useEffect(() => {
+        Accelerometer.setUpdateInterval(props.config.updateInterval);
         const newSubscription = props.config.isActive
             ? Accelerometer.addListener?.(setAccelerometerData)
             : null;
