@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 import { AppConfig } from '../config/app.config';
 import IApiResponse from '../interfaces/api-response.interface';
 
@@ -8,9 +8,10 @@ const apiService = axios.create({
 
 export const postSensorData = async (data: any): Promise<IApiResponse> => {
     try {
-        const response: AxiosResponse<IApiResponse> = await axios.post(AppConfig.BACKEND_URL, data);
+        const response = await apiService.post('', data);
         return response.data;
     } catch (error) {
-        console.log(error);
+        console.error(error);
+        throw new Error('Fehler beim Senden der Sensordaten');
     }
 };
