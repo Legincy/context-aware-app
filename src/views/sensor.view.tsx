@@ -38,7 +38,7 @@ export const SensorView = (props: Props) => {
         const extractedPayload = Object.keys(sensorData.payload).map((key: string): ICacheData => {
             return {
                 measurementId: sessionId,
-                timestamp: sensorData.timestamp,
+                time: sensorData.timestamp,
                 value: sensorData.payload[key],
                 sensor: key,
             };
@@ -111,6 +111,7 @@ export const SensorView = (props: Props) => {
 
     const handleDataSending = async (data: any[]) => {
         try {
+            console.log(data);
             const response = await postSensorData(data);
             console.log(`sent ${data.length} items`);
             return true;

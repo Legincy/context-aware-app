@@ -1,5 +1,5 @@
 export default interface ICacheData {
-    timestamp: string;
+    time: string;
     measurementId: string | number[];
     value: number;
     sensor: string;
